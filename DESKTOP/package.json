@@ -1,0 +1,43 @@
+{
+  "name": "focuscalc",
+  "version": "1.0.0",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "build": {
+    "appId": "com.focuscalc.app",
+    "productName": "FocusCalc",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "SRC/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "../BACKEND/dist/focuscalc-backend.exe",
+        "to": "backend/focuscalc-backend.exe"
+      },
+      {
+        "from": "../BACKEND/dist/storage",
+        "to": "backend/storage"
+      }
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "SRC/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    }
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  }
+}

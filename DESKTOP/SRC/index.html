@@ -1,0 +1,828 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>FocusCalc</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      .rollover-badge {
+        font-size: 11px;
+        background: #854d0e;
+        color: #fef08a;
+        padding: 2px 6px;
+        border-radius: 10px;
+        margin-left: 6px;
+      }
+
+      body {
+        font-family: "Segoe UI", sans-serif;
+        background: #0f0f0f;
+        color: #e0e0e0;
+        display: flex;
+        height: 100vh;
+        overflow: hidden;
+      }
+
+      /* SIDEBAR */
+      #sidebar {
+        width: 200px;
+        background: #1a1a1a;
+        display: flex;
+        flex-direction: column;
+        padding: 20px 0;
+        border-right: 1px solid #2a2a2a;
+      }
+
+      #sidebar h2 {
+        color: #4ade80;
+        font-size: 20px;
+        padding: 0 20px 20px;
+        border-bottom: 1px solid #2a2a2a;
+      }
+
+      .nav-item {
+        padding: 14px 20px;
+        cursor: pointer;
+        color: #888;
+        font-size: 14px;
+        transition: all 0.2s;
+      }
+
+      .nav-item:hover {
+        background: #222;
+        color: #fff;
+      }
+      .nav-item.active {
+        background: #222;
+        color: #4ade80;
+        border-left: 3px solid #4ade80;
+      }
+
+      /* MAIN CONTENT */
+      #content {
+        flex: 1;
+        overflow-y: auto;
+        padding: 30px;
+      }
+
+      .page {
+        display: none;
+      }
+      .page.active {
+        display: block;
+      }
+
+      h1 {
+        font-size: 24px;
+        margin-bottom: 6px;
+      }
+      .subtitle {
+        color: #666;
+        font-size: 14px;
+        margin-bottom: 24px;
+      }
+
+      /* CARDS */
+      .card {
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 10px;
+        padding: 20px;
+        margin-bottom: 16px;
+      }
+
+      /* ADD TASK */
+      .add-task-row {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 24px;
+      }
+
+      .add-task-row input {
+        flex: 1;
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 8px;
+        padding: 10px 14px;
+        color: #fff;
+        font-size: 14px;
+        outline: none;
+      }
+
+      .add-task-row input:focus {
+        border-color: #4ade80;
+      }
+
+      button {
+        background: #4ade80;
+        color: #0f0f0f;
+        border: none;
+        border-radius: 8px;
+        padding: 10px 18px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+
+      button:hover {
+        background: #22c55e;
+      }
+
+      button.secondary {
+        background: #2a2a2a;
+        color: #ccc;
+      }
+
+      button.secondary:hover {
+        background: #333;
+        color: #fff;
+      }
+
+      button.danger {
+        background: #ef4444;
+        color: #fff;
+      }
+
+      button.danger:hover {
+        background: #dc2626;
+      }
+
+      /* TASK ITEM */
+      .task-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px 0;
+        border-bottom: 1px solid #2a2a2a;
+      }
+
+      .task-item:last-child {
+        border-bottom: none;
+      }
+
+      .task-check {
+        width: 20px;
+        height: 20px;
+        cursor: pointer;
+        accent-color: #4ade80;
+      }
+
+      .task-name {
+        flex: 1;
+        font-size: 15px;
+      }
+
+      .task-name.done {
+        text-decoration: line-through;
+        color: #555;
+      }
+
+      .task-time {
+        font-size: 13px;
+        color: #4ade80;
+        font-variant-numeric: tabular-nums;
+        min-width: 60px;
+        text-align: right;
+      }
+
+      .task-actions {
+        display: flex;
+        gap: 6px;
+      }
+
+      .task-actions button {
+        padding: 6px 10px;
+        font-size: 12px;
+      }
+
+      /* FOCUS MODE */
+      .focus-status {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .status-dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #ef4444;
+      }
+
+      .status-dot.active {
+        background: #4ade80;
+      }
+
+      .blocker-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 12px 0;
+        border-bottom: 1px solid #2a2a2a;
+      }
+
+      .blocker-item:last-child {
+        border-bottom: none;
+      }
+
+      .blocker-badge {
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 20px;
+        background: #2a2a2a;
+        color: #888;
+        margin-left: 8px;
+      }
+
+      /* WEEKLY REPORT */
+      .report-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .stat-card {
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 10px;
+        padding: 20px;
+        text-align: center;
+      }
+
+      .stat-value {
+        font-size: 32px;
+        font-weight: 700;
+        color: #4ade80;
+      }
+      .stat-label {
+        font-size: 13px;
+        color: #666;
+        margin-top: 4px;
+      }
+
+      .day-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid #2a2a2a;
+        font-size: 14px;
+      }
+
+      .day-name {
+        width: 100px;
+        color: #888;
+      }
+      .day-bar-wrap {
+        flex: 1;
+        background: #2a2a2a;
+        border-radius: 4px;
+        height: 8px;
+      }
+      .day-bar {
+        height: 8px;
+        background: #4ade80;
+        border-radius: 4px;
+      }
+      .day-hours {
+        width: 60px;
+        text-align: right;
+        color: #4ade80;
+      }
+
+      /* MODAL */
+      #modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.7);
+        z-index: 100;
+        justify-content: center;
+        align-items: center;
+      }
+
+      #modal-overlay.open {
+        display: flex;
+      }
+
+      #modal {
+        background: #1a1a1a;
+        border: 1px solid #2a2a2a;
+        border-radius: 12px;
+        padding: 28px;
+        width: 400px;
+      }
+
+      #modal h3 {
+        margin-bottom: 20px;
+        font-size: 18px;
+      }
+
+      .form-group {
+        margin-bottom: 16px;
+      }
+      .form-group label {
+        display: block;
+        font-size: 13px;
+        color: #888;
+        margin-bottom: 6px;
+      }
+      .form-group input,
+      .form-group select {
+        width: 100%;
+        background: #0f0f0f;
+        border: 1px solid #2a2a2a;
+        border-radius: 8px;
+        padding: 10px 14px;
+        color: #fff;
+        font-size: 14px;
+        outline: none;
+      }
+
+      .form-group input:focus,
+      .form-group select:focus {
+        border-color: #4ade80;
+      }
+      .form-group select option {
+        background: #1a1a1a;
+      }
+
+      .modal-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- SIDEBAR -->
+    <div id="sidebar">
+      <h2>FocusCalc</h2>
+      <div class="nav-item active" onclick="showPage('tasks')">📋 Tasks</div>
+      <div class="nav-item" onclick="showPage('focus')">🔒 Focus Mode</div>
+      <div class="nav-item" onclick="showPage('report')">📊 Weekly Report</div>
+    </div>
+
+    <!-- CONTENT -->
+    <div id="content">
+      <!-- TASKS PAGE -->
+      <div id="page-tasks" class="page active">
+        <h1>Today's Tasks</h1>
+        <p class="subtitle" id="today-date"></p>
+        <div class="add-task-row">
+          <input
+            type="text"
+            id="new-task-input"
+            placeholder="Add a new task..."
+            onkeydown="if (event.key === 'Enter') addTask();"
+          />
+          <button onclick="addTask()">+ Add</button>
+        </div>
+        <div class="card">
+          <div id="task-list">
+            <p style="color: #555; text-align: center; padding: 20px">
+              No tasks yet. Add one above.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- FOCUS PAGE -->
+      <div id="page-focus" class="page">
+        <h1>Focus Mode</h1>
+        <p class="subtitle">
+          Block distracting apps and websites during work sessions.
+        </p>
+
+        <div class="card">
+          <div class="focus-status">
+            <div class="status-dot" id="focus-dot"></div>
+            <span id="focus-status-text">Focus mode is off</span>
+          </div>
+          <div style="display: flex; gap: 10px">
+            <button onclick="startFocus()">▶ Start Focus</button>
+            <button class="secondary" onclick="stopFocus()">
+              ■ Stop Focus
+            </button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+              margin-bottom: 16px;
+            "
+          >
+            <strong>Block List</strong>
+            <button onclick="openBlockerModal()">+ Add</button>
+          </div>
+          <div id="blocker-list">
+            <p style="color: #555; text-align: center; padding: 20px">
+              No items blocked yet.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- REPORT PAGE -->
+      <div id="page-report" class="page">
+        <h1>Weekly Report</h1>
+        <p class="subtitle" id="report-week"></p>
+        <div class="report-grid">
+          <div class="stat-card">
+            <div class="stat-value" id="stat-tasks">0</div>
+            <div class="stat-label">Tasks Completed</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-hours">0h</div>
+            <div class="stat-label">Hours Tracked</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value" id="stat-streak">0</div>
+            <div class="stat-label">Day Streak</div>
+          </div>
+        </div>
+        <div class="card">
+          <strong style="display: block; margin-bottom: 16px"
+            >Daily Breakdown</strong
+          >
+          <div id="day-breakdown"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL -->
+    <div id="modal-overlay">
+      <div id="modal">
+        <h3>Add Block Item</h3>
+        <div class="form-group">
+          <label>Type</label>
+          <select id="modal-type">
+            <option value="website">Website</option>
+            <option value="app">App</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" id="modal-name" placeholder="e.g. YouTube" />
+        </div>
+        <div class="form-group">
+          <label>Value</label>
+          <input
+            type="text"
+            id="modal-value"
+            placeholder="e.g. youtube.com or chrome.exe"
+          />
+        </div>
+        <div class="form-group">
+          <label>Category (optional)</label>
+          <input
+            type="text"
+            id="modal-category"
+            placeholder="e.g. Social Media"
+          />
+        </div>
+        <div class="modal-actions">
+          <button class="secondary" onclick="closeModal()">Cancel</button>
+          <button onclick="submitBlockerItem()">Add</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const API = "http://127.0.0.1:5000";
+      let tasks = [];
+      let blockerItems = [];
+      let timers = {};
+      let focusActive = false;
+
+      // ---------- NAVIGATION ----------
+      function showPage(name) {
+        document
+          .querySelectorAll(".page")
+          .forEach((p) => p.classList.remove("active"));
+        document
+          .querySelectorAll(".nav-item")
+          .forEach((n) => n.classList.remove("active"));
+        document.getElementById("page-" + name).classList.add("active");
+        event.target.classList.add("active");
+        if (name === "report") loadReport();
+      }
+
+      // ---------- DATE ----------
+      function getToday() {
+        return new Date().toISOString().split("T")[0];
+      }
+
+      function formatDate(d) {
+        return new Date(d).toLocaleDateString("en-IN", {
+          weekday: "long",
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        });
+      }
+
+      document.getElementById("today-date").textContent = formatDate(
+        new Date(),
+      );
+
+      // ---------- TASKS ----------
+      async function loadTasks() {
+        try {
+          const res = await fetch(`${API}/tasks?date=${getToday()}`);
+          tasks = await res.json();
+          renderTasks();
+        } catch (e) {
+          console.error("Backend not running?", e);
+        }
+      }
+
+      function renderTasks() {
+        const list = document.getElementById("task-list");
+        if (!tasks.length) {
+          list.innerHTML =
+            '<p style="color:#555; text-align:center; padding:20px;">No tasks yet. Add one above.</p>';
+          return;
+        }
+        list.innerHTML = tasks
+          .map(
+            (t) => `
+    <div class="task-item" id="task-${t.id}">
+      <input type="checkbox" class="task-check" ${t.completed ? "checked" : ""} onchange="toggleComplete('${t.id}', this.checked)" />
+      <span class="task-name ${t.completed ? "done" : ""}">${t.name}${t.rollover_count > 0 ? ` <span class="rollover-badge">↻${t.rollover_count}</span>` : ""}</span>
+      <span class="task-time" id="time-${t.id}">${formatTime(t.time_spent)}</span>
+      <div class="task-actions">
+        <button class="secondary" id="timer-btn-${t.id}" onclick="toggleTimer('${t.id}')">${t.timer_running ? "⏸" : "▶"}</button>
+        <button class="danger" onclick="deleteTask('${t.id}')">✕</button>
+      </div>
+    </div>
+  `,
+          )
+          .join("");
+
+        // restart any running timers
+        tasks.forEach((t) => {
+          if (t.timer_running) startLocalTimer(t.id);
+        });
+      }
+
+      function formatTime(seconds) {
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = seconds % 60;
+        if (h > 0) return `${h}h ${m}m`;
+        return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+      }
+
+      async function addTask() {
+        const input = document.getElementById("new-task-input");
+        const name = input.value.trim();
+        if (!name) return;
+        await fetch(`${API}/tasks`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, date: getToday() }),
+        });
+        input.value = "";
+        loadTasks();
+      }
+
+      async function toggleComplete(id, completed) {
+        await fetch(`${API}/tasks/${id}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ completed }),
+        });
+        loadTasks();
+      }
+
+      async function deleteTask(id) {
+        stopLocalTimer(id);
+        await fetch(`${API}/tasks/${id}`, { method: "DELETE" });
+        loadTasks();
+      }
+
+      async function toggleTimer(id) {
+        const task = tasks.find((t) => t.id === id);
+        if (!task) return;
+        if (task.timer_running) {
+          stopLocalTimer(id);
+          const elapsed = Math.floor(Date.now() / 1000 - task.start_time);
+          await fetch(`${API}/tasks/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              timer_running: false,
+              time_spent: task.time_spent + elapsed,
+              start_time: null,
+            }),
+          });
+        } else {
+          await fetch(`${API}/tasks/${id}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              timer_running: true,
+              start_time: Date.now() / 1000,
+            }),
+          });
+          startLocalTimer(id);
+        }
+        loadTasks();
+      }
+
+      function startLocalTimer(id) {
+        if (timers[id]) return;
+        timers[id] = setInterval(() => {
+          const task = tasks.find((t) => t.id === id);
+          if (!task) return;
+          const elapsed = Math.floor(Date.now() / 1000 - task.start_time);
+          const el = document.getElementById(`time-${id}`);
+          if (el) el.textContent = formatTime(task.time_spent + elapsed);
+        }, 1000);
+      }
+
+      function stopLocalTimer(id) {
+        clearInterval(timers[id]);
+        delete timers[id];
+      }
+
+      // ---------- BLOCKER ----------
+      async function loadBlocker() {
+        try {
+          const res = await fetch(`${API}/blocker/items`);
+          blockerItems = await res.json();
+          renderBlocker();
+        } catch (e) {}
+      }
+
+      function renderBlocker() {
+        const list = document.getElementById("blocker-list");
+        if (!blockerItems.length) {
+          list.innerHTML =
+            '<p style="color:#555; text-align:center; padding:20px;">No items blocked yet.</p>';
+          return;
+        }
+        list.innerHTML = blockerItems
+          .map(
+            (b) => `
+    <div class="blocker-item">
+      <span>${b.name}<span class="blocker-badge">${b.type}</span></span>
+      <button class="danger" onclick="deleteBlockerItem('${b.id}')">✕</button>
+    </div>
+  `,
+          )
+          .join("");
+      }
+
+      function openBlockerModal() {
+        document.getElementById("modal-overlay").classList.add("open");
+        setTimeout(() => document.getElementById("modal-name").focus(), 100);
+      }
+
+      function closeModal() {
+        document.getElementById("modal-overlay").classList.remove("open");
+        document.getElementById("modal-name").value = "";
+        document.getElementById("modal-value").value = "";
+        document.getElementById("modal-category").value = "";
+      }
+
+      document
+        .getElementById("modal-overlay")
+        .addEventListener("click", function (e) {
+          if (e.target === this) closeModal();
+        });
+
+      async function submitBlockerItem() {
+        const name = document.getElementById("modal-name").value.trim();
+        const value = document.getElementById("modal-value").value.trim();
+        const type = document.getElementById("modal-type").value;
+        const category = document.getElementById("modal-category").value.trim();
+        if (!name || !value) return alert("Name and value are required.");
+        await fetch(`${API}/blocker/items`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, value, type, category }),
+        });
+        closeModal();
+        loadBlocker();
+      }
+
+      async function deleteBlockerItem(id) {
+        await fetch(`${API}/blocker/items/${id}`, { method: "DELETE" });
+        loadBlocker();
+      }
+
+      async function startFocus() {
+        await fetch(`${API}/focus/start`, { method: "POST" });
+        focusActive = true;
+        document.getElementById("focus-dot").classList.add("active");
+        document.getElementById("focus-status-text").textContent =
+          "Focus mode is ON";
+      }
+
+      async function stopFocus() {
+        await fetch(`${API}/focus/stop`, { method: "POST" });
+        focusActive = false;
+        document.getElementById("focus-dot").classList.remove("active");
+        document.getElementById("focus-status-text").textContent =
+          "Focus mode is off";
+      }
+
+      // ---------- REPORT ----------
+      async function loadReport() {
+        const today = new Date();
+        const days = [];
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(today);
+          d.setDate(today.getDate() - i);
+          days.push(d.toISOString().split("T")[0]);
+        }
+
+        const weekStart = formatDate(new Date(days[0]));
+        const weekEnd = formatDate(new Date(days[6]));
+        document.getElementById("report-week").textContent =
+          `${weekStart} — ${weekEnd}`;
+
+        let totalTasks = 0,
+          totalSeconds = 0;
+        const dayData = [];
+
+        for (const date of days) {
+          const res = await fetch(`${API}/tasks?date=${date}`);
+          const dayTasks = await res.json();
+          const completed = dayTasks.filter((t) => t.completed).length;
+          const seconds = dayTasks.reduce((sum, t) => sum + t.time_spent, 0);
+          totalTasks += completed;
+          totalSeconds += seconds;
+          dayData.push({ date, completed, seconds });
+        }
+
+        const totalHours = (totalSeconds / 3600).toFixed(1);
+        document.getElementById("stat-tasks").textContent = totalTasks;
+        document.getElementById("stat-hours").textContent = totalHours + "h";
+
+        // streak
+        let streak = 0;
+        for (let i = dayData.length - 1; i >= 0; i--) {
+          if (dayData[i].completed > 0) streak++;
+          else break;
+        }
+        document.getElementById("stat-streak").textContent = streak;
+
+        const maxSeconds = Math.max(...dayData.map((d) => d.seconds), 1);
+        document.getElementById("day-breakdown").innerHTML = dayData
+          .map((d) => {
+            const pct = Math.round((d.seconds / maxSeconds) * 100);
+            const hrs = (d.seconds / 3600).toFixed(1);
+            const name = new Date(d.date).toLocaleDateString("en-IN", {
+              weekday: "short",
+              month: "short",
+              day: "numeric",
+            });
+            return `
+      <div class="day-row">
+        <span class="day-name">${name}</span>
+        <div class="day-bar-wrap"><div class="day-bar" style="width:${pct}%"></div></div>
+        <span class="day-hours">${hrs}h</span>
+      </div>
+    `;
+          })
+          .join("");
+      }
+
+      // ---------- INIT ----------
+      loadTasks();
+      loadBlocker();
+      // Run rollover on startup
+      fetch("http://127.0.0.1:5000/tasks/rollover", { method: "POST" })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.rolled > 0) {
+            alert(
+              `${data.rolled} incomplete task(s) from yesterday have been rolled over to today.`,
+            );
+            loadTasks();
+          }
+        });
+
+      // Auto refresh every 5 seconds
+      setInterval(() => {
+        loadTasks();
+        loadBlocker();
+      }, 5000);
+    </script>
+  </body>
+</html>

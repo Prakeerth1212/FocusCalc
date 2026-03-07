@@ -1,0 +1,27 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+dist/
+build/
+*.spec
+
+# Database
+storage/
+*.db
+
+# Node
+node_modules/
+release/
+
+# React Native
+android/.gradle/
+android/app/build/
+android/build/
+ios/build/
+*.keystore
+
+# Misc
+.DS_Store
+*.log

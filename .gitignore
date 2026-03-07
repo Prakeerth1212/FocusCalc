@@ -25,3 +25,8 @@ ios/build/
 # Misc
 .DS_Store
 *.log
+# Installed app folder
+FocusCalc/
+
+# Junk files
+*.txt

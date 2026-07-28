@@ -1,3 +1,4 @@
+<!-- FocusCalc v1.0.0 -->
 # FocusCalc
 
 A productivity app for Windows and Android that helps you manage tasks, track time, and block distracting apps/websites during focus sessions.
